@@ -1,19 +1,10 @@
 #Inputs
-age = int(input("Age : "))
+age = (input("Age : "))
 ethnicity = input("Ethnicity : ")
-location = input("Location : ")
 gender = input("Gender (M/F) : ").upper()
-married = True if input("Married (Y/N) : ").upper() == "Y" else False
+maritalStatus = input("Marital Status : ")
 disposableIncome = float(input("Disposable Income / £ : "))
 educationLevel = input("Higher Education Level : ").upper()
-
-#Chosen sports
-sports = []
-sport = None 
-while(sport != ""):
-    sport = input("Betted on sport (Blank to close): ").strip()
-    if(sport != ""):
-        sports.append(sport)
 
 #Calculation
 """Assumptions:
@@ -21,8 +12,8 @@ while(sport != ""):
 -  
 
 """
-male_stats_dict = {
-    "Never Married ": {"b": 0.69, "beta": 0.06},
+maleStatsDict = {
+    "Never Married": {"b": 0.69, "beta": 0.06},
     "Single Living w/ S.O.": {"b": 2.19, "beta": 0.09},
     "Seperated": {"b": 1.52, "beta": 0.03},
     "Divorced": {"b": 1.65, "beta": 0.07},
@@ -35,8 +26,8 @@ male_stats_dict = {
     "Other": {"b": -0.64, "beta": -0.04}
 }
 
-female_stats_dict = {
-    "Never Married ": {"b": -0.16, "beta": -0.02},
+femaleStatsDict = {
+    "Never Married": {"b": -0.16, "beta": -0.02},
     "Single Living w/ S.O.": {"b": 0.22, "beta": 0.01},
     "Seperated": {"b": -3.44, "beta": -0.09},
     "Divorced": {"b": -0.85, "beta": -0.05},
@@ -52,7 +43,14 @@ female_stats_dict = {
 expectedOut = 0
 
 #Risk tolerance calculation
+baseB = 18.09
 
+if(gender == "M"):
+    b = baseB + (maleStatsDict[maritalStatus]["b"] + maleStatsDict[age]["b"] + maleStatsDict[ethnicity]["b"])
+else:
+    b = baseB + (femaleStatsDict[maritalStatus]["b"] + femaleStatsDict[age]["b"] + femaleStatsDict[ethnicity]["b"])
+
+print(b)
 
 #Output
 print(f"Expected change : {"+" if expectedOut >= 0 else "-"}£{abs(expectedOut)} per year")
