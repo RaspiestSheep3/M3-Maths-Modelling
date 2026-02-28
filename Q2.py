@@ -21,6 +21,19 @@ while(sport != ""):
 -  
 
 """
+femaleBetaDict = {
+    "Never Married " : -0.02,
+    "Single Living w/ S.O." : 0.01,
+    "Seperated" : -0.09,
+    "Divorced" : -0.05,
+    "Widowed" : 0.01,
+    "25-44" : -0.09,
+    "45-64" : -0.13,
+    "65+" : -0.13,
+    "Black" : 0.02,
+    "Hispanic" : 0.00,
+    "Other" : -0.01
+}
 
 maleBetaDict = {
     "Never Married " : 0.06,
