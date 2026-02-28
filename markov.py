@@ -3,11 +3,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-gender_input = "male"
-age_input = 22
-marital_input = "single living w/ sig other"
-ethnicity_input = "black"
-annual_di_input = 120000
+gender_input = "female"
+age_input = 65
+marital_input = "married"
+ethnicity_input = "white"
+annual_di_input = 50000
 
 def get_frt_score(age, gender, marital, annual_di, ethnicity):
     """
@@ -31,6 +31,7 @@ def get_frt_score(age, gender, marital, annual_di, ethnicity):
         elif marital == "separated": score += 1.52
         elif marital == "divorced": score += 1.65
         elif marital == "widowed": score += 1.26
+        elif marital == "married": score += 0.00
         # Age
         if 25 <= age <= 44: score -= 0.18
         elif 45 <= age <= 64: score -= 1.58
@@ -47,6 +48,7 @@ def get_frt_score(age, gender, marital, annual_di, ethnicity):
         elif marital == "separated": score -= 3.44
         elif marital == "divorced": score -= 0.85
         elif marital == "widowed": score += 0.34
+        elif marital == "married": score += 0.00
         # Age
         if 25 <= age <= 44: score -= 0.92
         elif 45 <= age <= 64: score -= 1.36
@@ -58,24 +60,34 @@ def get_frt_score(age, gender, marital, annual_di, ethnicity):
 
     return score
 
-def run_frenzy_sim_comprehensive(age, gender, marital, ethnicity, annual_di, n_sims=10000):
+def run_frenzy_sim_comprehensive(age, gender, marital, ethnicity, annual_di, n_sims=100000):
+    # 1. Calculate Psychology Score & Normalize
     frt = get_frt_score(age, gender, marital, annual_di, ethnicity)
+    # FRT Scale is 13-47; Normalizing to 0.0 - 1.0 index
     frt_norm = (max(13, min(frt, 47)) - 13) / (47 - 13)
 
-    # UK 2026 Stats
+    # 2. Calculate Economic 'Income Pressure'
     anchor = 38400.0
     alpha = 0.45 if gender.lower() == "male" else 0.25
     income_pressure = (anchor / max(1000, annual_di)) ** alpha
 
-    # Transition Matrix (Request specific weights)
+    # 3. DYNAMIC TRANSITION MATRIX
+    # Use frt_norm to 'throttle' the likelihood of entering and staying in Frenzy
+    p01 = 0.015 * (1 + frt_norm) # Inactive -> Baseline
+    p02 = 0.005 * (1 + frt_norm) # Inactive -> Frenzy
+    p12 = 0.25  * (1 + frt_norm) # Baseline -> Frenzy
+    # Persistence in Frenzy (State 2) increases with FRT
+    p22 = min(0.95, 0.82 + (0.10 * frt_norm)) 
+
     P = np.array([
-        [0.98, 0.015, 0.005],
-        [0.30, 0.45, 0.25],
-        [0.05, 0.13, 0.82] # Highly sticky frenzy state
+        [1.0 - p01 - p02, p01, p02],      # Transitions from State 0
+        [0.30, 0.70 - p12, p12],           # Transitions from State 1
+        [0.18 - (p22-0.82), 1.0-p22-(0.18-(p22-0.82)), p22] # Transitions from State 2
     ])
+    # Ensure rows sum to 1.0
     P = P / P.sum(axis=1)[:, None]
 
-    # UK Ethnicity Scalar (Participation adjustment)
+    # 4. UK Participation & Outcomes
     eth_map = {"black": 1.15, "asian": 0.65, "white": 1.0, "hispanic": 1.05}
     e_scalar = eth_map.get(ethnicity.lower(), 1.0)
 
@@ -83,10 +95,8 @@ def run_frenzy_sim_comprehensive(age, gender, marital, ethnicity, annual_di, n_s
     active_outcomes = []
 
     for _ in range(n_sims):
-        # 50% Population Baseline: Probability someone is a "Gambler" vs "Non-Gambler"
-        is_gambler = np.random.rand() < 0.50
-        
-        if not is_gambler:
+        # 50% Population participation baseline
+        if np.random.rand() > 0.50:
             total_outcomes.append(0.0)
             continue
 
@@ -94,9 +104,10 @@ def run_frenzy_sim_comprehensive(age, gender, marital, ethnicity, annual_di, n_s
         for _ in range(365):
             state = np.random.choice([0, 1, 2], p=P[state])
             if state > 0:
+                # Regressive Edge logic
                 edge = 0.05 if state == 1 else (0.05 + 0.12 * (income_pressure**0.25))
-                # mu scales with DI but also with the State Intensity
                 mu_base = annual_di * (0.00015 if state == 1 else 0.0025)
+                # Log-Normal Sigma creates the Fat Tail (Power Law)
                 stochastic_wager = np.random.lognormal(np.log(mu_base), 1.2)
                 annual_loss += (stochastic_wager * edge * e_scalar)
                 
@@ -127,7 +138,7 @@ mean_active = np.mean(results_active)
 plt.axvline(mean_active, color='gold', linestyle='--', linewidth=3, label=f'Mean (Active Gamblers Only): £{mean_active:.2f}')
 plt.axvline(mean_total, color='orange', linestyle=':', linewidth=3, label=f'Mean (Full Population incl. £0): £{mean_total:.2f}')
 
-plt.title(f"Annual Loss Distribution for Active Gamblers\nProfile: {age_input}yo {gender_input} | {marital_input} | {ethnicity_input} | {annual_di_input} DI | FRT: {final_frt:.2f}", fontsize=14)
+plt.title(f"Annual Loss Distribution for Active Gamblers\nProfile: {age_input}yo {gender_input} | {marital_input} | {ethnicity_input} | {annual_di_input} DI | FRT: {final_frt:.2f} |Percentage of disposable: {mean_active/annual_di_input*100:.2f}%", fontsize=14)
 plt.xlabel("Annual Net Loss (£)")
 plt.ylabel("Frenzy (Frequency of Outcome)")
 plt.legend()
