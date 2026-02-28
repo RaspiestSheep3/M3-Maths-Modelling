@@ -54,3 +54,88 @@ print(b)
 
 #Output
 print(f"Expected change : {"+" if expectedOut >= 0 else "-"}£{abs(expectedOut)} per year")
+
+
+
+
+def predictFinancialRiskTolerance(
+    isFemale=0, neverMarried=0, singleLivingWithSo=0, separated=0, divorced=0, widowed=0,
+    personalIncome=0.0, education=0.0, financialKnowledge=0.0, householdSize=1, contToHhIncome=0.0,
+    age25To44=0, age45To64=0, age65AndOlder=0,
+    africanAmerican=0, hispanicLatino=0, otherRace=0,
+    partTime=0, fullTime=0, retired=0
+):
+    """
+    Predicts Financial Risk Tolerance using split gender models (Tables 4 & 5).
+    """
+    riskTolerance = 0.0
+    
+    if isFemale == 1:
+        # --- TABLE 4: FEMALE MODEL ---
+        riskTolerance += 18.00  # Female Constant
+        
+        # Marital Status
+        riskTolerance += (-0.16 * neverMarried)
+        riskTolerance += (0.22 * singleLivingWithSo)
+        riskTolerance += (-3.44 * separated)
+        riskTolerance += (-0.85 * divorced)
+        riskTolerance += (0.34 * widowed)
+        
+        # Continuous Variables
+        riskTolerance += (0.20 * personalIncome)
+        riskTolerance += (0.29 * education)
+        riskTolerance += (1.05 * financialKnowledge)
+        riskTolerance += (0.34 * householdSize)
+        riskTolerance += (0.01 * contToHhIncome)
+        
+        # Age
+        riskTolerance += (-0.92 * age25To44)
+        riskTolerance += (-1.36 * age45To64)
+        riskTolerance += (-1.99 * age65AndOlder)
+        
+        # Race
+        riskTolerance += (0.31 * africanAmerican)
+        riskTolerance += (0.01 * hispanicLatino)
+        riskTolerance += (-0.10 * otherRace)
+        
+        # Employment
+        riskTolerance += (0.00 * partTime) 
+        riskTolerance += (0.82 * fullTime)
+        riskTolerance += (0.02 * retired)
+        
+    else:
+        # --- TABLE 5: MALE MODEL ---
+        riskTolerance += 18.09  # Male Constant
+        
+        # Marital Status
+        riskTolerance += (0.69 * neverMarried)
+        riskTolerance += (2.19 * singleLivingWithSo)
+        riskTolerance += (1.52 * separated)
+        riskTolerance += (1.65 * divorced)
+        riskTolerance += (1.26 * widowed)
+        
+        # Continuous Variables
+        riskTolerance += (0.05 * personalIncome)
+        riskTolerance += (0.17 * education)
+        riskTolerance += (1.34 * financialKnowledge)
+        riskTolerance += (0.18 * householdSize)
+        riskTolerance += (0.02 * contToHhIncome)
+        
+        # Age
+        riskTolerance += (-0.18 * age25To44)
+        riskTolerance += (-1.58 * age45To64)
+        riskTolerance += (-1.44 * age65AndOlder)
+        
+        # Race
+        riskTolerance += (-1.68 * africanAmerican)
+        riskTolerance += (-1.22 * hispanicLatino)
+        riskTolerance += (-0.64 * otherRace)
+        
+        # Employment
+        riskTolerance += (1.57 * partTime)
+        riskTolerance += (1.20 * fullTime)
+        riskTolerance += (-0.49 * retired)
+        
+    return riskTolerance
+
+# You can still pipe this directly into your calculateMaxAcceptableLoss function!
