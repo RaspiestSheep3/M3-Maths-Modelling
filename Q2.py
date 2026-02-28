@@ -78,8 +78,8 @@ y = pow((disposableIncome ** 2 * riskTolerance **2)/(1-epsilon**2),0.25)
 
 Ex = -y * (0.5 + epsilon/2) + y*(0.5 - epsilon/2)
 
-betPerYearCoefficient = 0.000080765
-numBetsPerYear = disposableIncome*betPerYearCoefficient*abs(Ex)
+betPerYearCoefficient = 0.3
+numBetsPerYear = betPerYearCoefficient*abs(Ex)
 
 print(f"r : {riskTolerance}")
 print(f"Y : {y}")
