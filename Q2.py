@@ -4,14 +4,8 @@ ethnicity = input("Ethnicity : ")
 gender = input("Gender (M/F) : ").upper()
 maritalStatus = input("Marital Status : ")
 disposableIncome = float(input("Disposable Income / £ : "))
-educationLevel = input("Higher Education Level : ").upper()
 
 #Calculation
-"""Assumptions:
-- women β = -0.13 compared to men
--  
-
-"""
 maleStatsDict = {
     "Never Married": {"b": 0.69, "beta": 0.06},
     "Single Living w/ S.O.": {"b": 2.19, "beta": 0.09},
@@ -55,87 +49,40 @@ print(b)
 #Output
 print(f"Expected change : {"+" if expectedOut >= 0 else "-"}£{abs(expectedOut)} per year")
 
+def PredictRiskTolerance():
+    if(gender == "M"):
+        r = 18.09
+        r += maleStatsDict[age]["b"]
+        r += maleStatsDict[ethnicity]["b"]
+        r += maleStatsDict[maritalStatus]["b"]
 
+        #r = -1 + 2 * (r - 15.52) / (19.46 - 15.52)
 
-
-def predictFinancialRiskTolerance(
-    isFemale=0, neverMarried=0, singleLivingWithSo=0, separated=0, divorced=0, widowed=0,
-    personalIncome=0.0, education=0.0, financialKnowledge=0.0, householdSize=1, contToHhIncome=0.0,
-    age25To44=0, age45To64=0, age65AndOlder=0,
-    africanAmerican=0, hispanicLatino=0, otherRace=0,
-    partTime=0, fullTime=0, retired=0
-):
-    """
-    Predicts Financial Risk Tolerance using split gender models (Tables 4 & 5).
-    """
-    riskTolerance = 0.0
-    
-    if isFemale == 1:
-        # --- TABLE 4: FEMALE MODEL ---
-        riskTolerance += 18.00  # Female Constant
-        
-        # Marital Status
-        riskTolerance += (-0.16 * neverMarried)
-        riskTolerance += (0.22 * singleLivingWithSo)
-        riskTolerance += (-3.44 * separated)
-        riskTolerance += (-0.85 * divorced)
-        riskTolerance += (0.34 * widowed)
-        
-        # Continuous Variables
-        riskTolerance += (0.20 * personalIncome)
-        riskTolerance += (0.29 * education)
-        riskTolerance += (1.05 * financialKnowledge)
-        riskTolerance += (0.34 * householdSize)
-        riskTolerance += (0.01 * contToHhIncome)
-        
-        # Age
-        riskTolerance += (-0.92 * age25To44)
-        riskTolerance += (-1.36 * age45To64)
-        riskTolerance += (-1.99 * age65AndOlder)
-        
-        # Race
-        riskTolerance += (0.31 * africanAmerican)
-        riskTolerance += (0.01 * hispanicLatino)
-        riskTolerance += (-0.10 * otherRace)
-        
-        # Employment
-        riskTolerance += (0.00 * partTime) 
-        riskTolerance += (0.82 * fullTime)
-        riskTolerance += (0.02 * retired)
-        
     else:
-        # --- TABLE 5: MALE MODEL ---
-        riskTolerance += 18.09  # Male Constant
-        
-        # Marital Status
-        riskTolerance += (0.69 * neverMarried)
-        riskTolerance += (2.19 * singleLivingWithSo)
-        riskTolerance += (1.52 * separated)
-        riskTolerance += (1.65 * divorced)
-        riskTolerance += (1.26 * widowed)
-        
-        # Continuous Variables
-        riskTolerance += (0.05 * personalIncome)
-        riskTolerance += (0.17 * education)
-        riskTolerance += (1.34 * financialKnowledge)
-        riskTolerance += (0.18 * householdSize)
-        riskTolerance += (0.02 * contToHhIncome)
-        
-        # Age
-        riskTolerance += (-0.18 * age25To44)
-        riskTolerance += (-1.58 * age45To64)
-        riskTolerance += (-1.44 * age65AndOlder)
-        
-        # Race
-        riskTolerance += (-1.68 * africanAmerican)
-        riskTolerance += (-1.22 * hispanicLatino)
-        riskTolerance += (-0.64 * otherRace)
-        
-        # Employment
-        riskTolerance += (1.57 * partTime)
-        riskTolerance += (1.20 * fullTime)
-        riskTolerance += (-0.49 * retired)
-        
-    return riskTolerance
+        r = 18.35
+        r += femaleStatsDict[age]["b"]
+        r += femaleStatsDict[ethnicity]["b"]
+        r += femaleStatsDict[maritalStatus]["b"]
 
-# You can still pipe this directly into your calculateMaxAcceptableLoss function!
+        #r = -1 + 2 * (r - 12.82) / (17.96 - 12.82)
+
+    return r
+
+
+#Frequency equation
+riskTolerance = PredictRiskTolerance()
+
+epsilon = 0.05
+
+y = pow((disposableIncome ** 2 * riskTolerance **2)/(1-epsilon**2),0.25)
+
+Ex = -y * (0.5 + epsilon/2) + y*(0.5 - epsilon/2)
+
+betPerYearCoefficient = 0.000080765
+numBetsPerYear = disposableIncome*betPerYearCoefficient*abs(Ex)
+
+print(f"r : {riskTolerance}")
+print(f"Y : {y}")
+print(f"E(x) : {Ex}")
+print(f"No : {numBetsPerYear}")
+print(f"Expected Loss : {Ex*numBetsPerYear}")
